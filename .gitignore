@@ -42,4 +42,7 @@ bower_components/
 # ---> Operating System generated files
 ehthumbs.db
 Thumbs.db
+
+data/
+
 EOL
