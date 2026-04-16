@@ -14,6 +14,7 @@ The goal is to improve category detection accuracy by grounding the LLM's respon
 - **Embedding model:** `nomic-embed-text-v2-moe` (configurable via environment variable)
 - **Vector database:** Chroma (running locally)
 - **Containerization:** Docker + Docker Compose (the API and Chroma run as separate services)
+- **Testing:** Vitest — unit and integration tests
 
 ## Functional Requirements
 
@@ -69,32 +70,107 @@ The goal is to improve category detection accuracy by grounding the LLM's respon
 - **Logging:** Basic request/response and pipeline-step logging.
 - **Error handling:** Clear error responses when Ollama or Chroma are unavailable, the CSV is missing, or indexing fails.
 
-## Suggested Project Structure
+## Project Structure
+
+Organized by **Package by Feature** — each feature is a self-contained folder with its own route, service, types, and tests. Shared infrastructure lives in `shared/`.
+
+```
 .
 ├── data/
 ├── src/
-│   ├── index.ts
-│   ├── routes/
-│   │   ├── classify.ts
-│   │   └── index.ts
-│   ├── services/
-│   │   ├── ollama.ts
-│   │   ├── chroma.ts
-│   │   └── rag.ts
-│   ├── ingestion/
-│   │   └── csvLoader.ts
-│   └── config/
-│       └── env.ts
+│   ├── index.ts                        # App entry point
+│   ├── app.ts                          # Express app setup
+│   │
+│   ├── classify/                       # Feature: classify a shipment description
+│   │   ├── classify.router.ts
+│   │   ├── classify.service.ts
+│   │   ├── classify.types.ts
+│   │   └── classify.test.ts
+│   │
+│   ├── indexing/                       # Feature: index categories from CSV
+│   │   ├── indexing.router.ts
+│   │   ├── indexing.service.ts
+│   │   ├── indexing.types.ts
+│   │   ├── csvLoader.ts
+│   │   └── indexing.test.ts
+│   │
+│   └── shared/                         # Cross-feature infrastructure
+│       ├── config/
+│       │   └── env.ts
+│       ├── ollama/
+│       │   ├── ollama.client.ts
+│       │   └── ollama.test.ts
+│       ├── chroma/
+│       │   ├── chroma.client.ts
+│       │   └── chroma.test.ts
+│       └── rag/
+│           ├── rag.service.ts
+│           └── rag.test.ts
+│
 ├── docker-compose.yml
 ├── Dockerfile
 ├── package.json
 ├── tsconfig.json
+├── vitest.config.ts
 └── .env.example
+```
 
+## Development Workflow — Strict TDD
+
+All production code must be written following **strict Test-Driven Development (TDD)**. No exceptions.
+
+### The Red-Green-Refactor Cycle
+
+Every change to production code must follow this cycle:
+
+1. **Red** — Write a failing test that describes the behavior you want. Run it and confirm it fails for the right reason. Do not write any production code yet.
+2. **Green** — Write the minimum production code needed to make the test pass. Resist the urge to add more than necessary.
+3. **Refactor** — Clean up both the test and production code. Run tests again to confirm nothing broke.
+
+### Coverage Requirements
+
+- **Statement coverage must remain above 90% at all times.**
+- Coverage is enforced by Vitest. The `vitest.config.ts` must include:
+
+```ts
+// vitest.config.ts
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      thresholds: {
+        statements: 90,
+        branches: 90,
+        functions: 90,
+        lines: 90,
+      },
+    },
+  },
+});
+```
+
+- Run tests with coverage: `npx vitest run --coverage`
+- CI must fail if coverage drops below threshold.
+
+### Test File Conventions
+
+- Test files live **alongside the source file they test** (co-location, consistent with package-by-feature).
+- Naming: `<module>.test.ts`
+- External dependencies (Ollama, Chroma) must always be **mocked** in unit tests using `vi.mock()` or dependency injection.
+- Integration tests that require running services should be tagged and excluded from the default test run.
+
+### What to test
+
+- Every public function or method must have at least one test.
+- Cover the happy path, edge cases, and error/failure paths.
+- Never test implementation details — test observable behavior.
 
 ## Open Questions / Future Decisions
 
 - Adopt **function calling / structured JSON output** from Ollama for deterministic parsing.
 - Add authentication (API key or JWT) when exposed beyond local use.
-- Add automated tests (Vitest/Jest).
+- Add integration test suite (Vitest) with Docker-based Chroma and Ollama stubs.
 - Decide whether Ollama runs as a Compose service or external dependency.
