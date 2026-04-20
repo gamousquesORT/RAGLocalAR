@@ -17,14 +17,10 @@ export function parseCsv(csvContent: string): CsvRow[] {
     if (!row.category_name_es) {
       throw new Error(`CSV row missing required 'category_name_es' field: ${JSON.stringify(row)}`);
     }
-    if (!row.category_name) {
-      throw new Error(`CSV row missing required 'category_name' field: ${JSON.stringify(row)}`);
-    }
 
     normalizedRows.push({
       description,
       category_name_es: row.category_name_es,
-      category_name: row.category_name,
     });
   }
 

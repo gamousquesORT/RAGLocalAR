@@ -17,19 +17,18 @@ export class IndexingService {
     for (const row of rows) {
       try {
         const embedding = await this.ragService.buildEmbedding(row.description);
-        const id = row.category_name.toLowerCase().replace(/\s+/g, '-');
+        const id = row.category_name_es.toLowerCase().replace(/\s+/g, '-');
         await this.chroma.upsert([{
           id,
           embedding,
           metadata: {
             category_name_es: row.category_name_es,
-            category_name: row.category_name,
           },
           document: row.description,
         }]);
         indexed++;
       } catch (err) {
-        errors.push(`Failed to index "${row.category_name}": ${(err as Error).message}`);
+        errors.push(`Failed to index "${row.category_name_es}": ${(err as Error).message}`);
       }
     }
 

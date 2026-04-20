@@ -11,46 +11,39 @@ import * as fs from 'fs';
 // ── csvLoader tests ──────────────────────────────────────────────────────────
 
 describe('parseCsv', () => {
-  const validCsv = `category_name_es,category_name,description
-Electrónica,Electronics,laptops computers
-Arte,Art,paintings sculptures`;
+  const validCsv = `category_name_es,description
+Electrónica,laptops computers
+Arte,paintings sculptures`;
 
   it('parses valid CSV into CsvRow array', () => {
     const rows = parseCsv(validCsv);
     expect(rows).toHaveLength(2);
     expect(rows[0]).toEqual({
       category_name_es: 'Electrónica',
-      category_name: 'Electronics',
       description: 'laptops computers',
     });
   });
 
   it('throws when a row is missing the description field', () => {
-    const badCsv = `category_name_es,category_name\nElectrónica,Electronics`;
+    const badCsv = `category_name_es\nElectrónica`;
     expect(() => parseCsv(badCsv)).toThrow();
   });
 
   it('accepts descripcion as an alias for description', () => {
-    const spanishHeaderCsv = `category_name_es,category_name,descripcion\nAbalorios y Fabricación de Joyería,Beading & Jewelry Making,Insumos de joyería`;
+    const spanishHeaderCsv = `category_name_es,descripcion\nAbalorios y Fabricación de Joyería,Insumos de joyería`;
 
     const rows = parseCsv(spanishHeaderCsv);
 
     expect(rows).toEqual([
       {
         category_name_es: 'Abalorios y Fabricación de Joyería',
-        category_name: 'Beading & Jewelry Making',
         description: 'Insumos de joyería',
       },
     ]);
   });
 
   it('throws when a row is missing category_name_es', () => {
-    const badCsv = `category_name,description\nElectronics,laptops`;
-    expect(() => parseCsv(badCsv)).toThrow();
-  });
-
-  it('throws when a row is missing category_name', () => {
-    const badCsv = `category_name_es,description\nElectrónica,laptops`;
+    const badCsv = `description\nlaptops`;
     expect(() => parseCsv(badCsv)).toThrow();
   });
 

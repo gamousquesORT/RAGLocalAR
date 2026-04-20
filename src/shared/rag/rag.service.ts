@@ -9,7 +9,7 @@ export class RagService {
 
   buildGroundedPrompt(userQuery: string, candidates: ChromaResult[]): string {
     const candidateList = candidates
-      .map((c) => `- ${c.metadata.category_name}: ${c.document}`)
+      .map((c) => `- ${c.metadata.category_name_es}: ${c.document}`)
       .join('\n');
 
     return `You are a logistics classification assistant. Given the candidate categories below, identify ALL categories that match the user's shipment description.
@@ -19,7 +19,7 @@ The user wants to transport: "${userQuery}"
 Candidate categories:
 ${candidateList}
 
-Respond ONLY with a JSON array of the Spanish category names (category_name_es) that apply.
+Respond ONLY with a JSON array of the matching category names exactly as listed above.
 Example: ["Electrónica y Tecnología", "Arte y Antigüedades"]
 
 JSON response:`;

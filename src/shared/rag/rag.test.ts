@@ -13,8 +13,8 @@ const mockChroma = {
 } as unknown as ChromaClientAdapter;
 
 const candidateResults: ChromaResult[] = [
-  { id: '1', metadata: { category_name_es: 'Electrónica y Tecnología', category_name: 'Electronics' }, document: 'laptops computers', distance: 0.1 },
-  { id: '2', metadata: { category_name_es: 'Arte y Antigüedades', category_name: 'Art' }, document: 'paintings sculptures', distance: 0.2 },
+  { id: '1', metadata: { category_name_es: 'Electrónica y Tecnología' }, document: 'laptops computers', distance: 0.1 },
+  { id: '2', metadata: { category_name_es: 'Arte y Antigüedades' }, document: 'paintings sculptures', distance: 0.2 },
 ];
 
 let service: RagService;
@@ -32,8 +32,8 @@ describe('RagService.buildGroundedPrompt', () => {
 
   it('includes candidate category names in the prompt', () => {
     const prompt = service.buildGroundedPrompt('ship a laptop', candidateResults);
-    expect(prompt).toContain('Electronics');
-    expect(prompt).toContain('Art');
+    expect(prompt).toContain('Electrónica y Tecnología');
+    expect(prompt).toContain('Arte y Antigüedades');
   });
 });
 
