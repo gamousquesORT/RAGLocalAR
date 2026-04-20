@@ -107,6 +107,7 @@ The defaults in `.env.example` work as-is if Ollama and Chroma are running local
 ```env
 PORT=3000
 OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_BASE_URL_DOCKER=http://host.docker.internal:11434
 OLLAMA_MODEL=llama3.2
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text-v2-moe
 CHROMA_URL=http://localhost:8000
@@ -155,10 +156,10 @@ Docker Compose runs both the API and Chroma as separate services. Ollama must be
 cp .env.example .env
 ```
 
-Update `OLLAMA_BASE_URL` to reach Ollama from inside Docker:
+Set `OLLAMA_BASE_URL_DOCKER` so the container can reach Ollama on your host:
 
 ```env
-OLLAMA_BASE_URL=http://host.docker.internal:11434
+OLLAMA_BASE_URL_DOCKER=http://host.docker.internal:11434
 ```
 
 > **Linux users:** `host.docker.internal` does not resolve automatically. Add the following to the `api` service in `docker-compose.yml`:

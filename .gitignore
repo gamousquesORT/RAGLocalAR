@@ -1,6 +1,5 @@
 # ---> Node.js and NPM packages
 node_modules/
-package-lock.json
 yarn.lock
 
 # ---> TypeScript Compiler Output
