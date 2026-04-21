@@ -82,7 +82,8 @@ User prompt
 │       └── rag/                    # RAG orchestration (embed → search → classify)
 ├── docker-compose.yml
 ├── Dockerfile
-├── .env.example
+├── .env.example.local
+├── .env.example.Compose
 └── package.json
 ```
 
@@ -99,20 +100,21 @@ npm install
 ### 2. Configure environment
 
 ```bash
-cp .env.example .env
+cp .env.example.local .env
 ```
 
-The defaults in `.env.example` work as-is if Ollama and Chroma are running locally:
+Use `.env.example.local` when running the API directly on your machine (`npm run dev`).
+
+The defaults in `.env.example.local` work as-is if Ollama and Chroma are running locally:
 
 ```env
 PORT=3000
 OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_BASE_URL_DOCKER=http://host.docker.internal:11434
 OLLAMA_MODEL=llama3.2
 OLLAMA_EMBEDDING_MODEL=nomic-embed-text-v2-moe
 CHROMA_URL=http://localhost:8000
 CHROMA_COLLECTION=logistics_categories
-CSV_PATH=./data/logistics-categories.csv
+CSV_PATH=./data/product-categories.csv
 TOP_K=5
 ```
 
@@ -153,10 +155,12 @@ Docker Compose runs both the API and Chroma as separate services. Ollama must be
 ### 1. Configure environment
 
 ```bash
-cp .env.example .env
+cp .env.example.Compose .env
 ```
 
-Set `OLLAMA_BASE_URL_DOCKER` so the container can reach Ollama on your host:
+Use `.env.example.Compose` when running with Docker Compose (`docker compose up`).
+
+Compose uses `OLLAMA_BASE_URL_DOCKER` from `.env` and maps it to the app's required `OLLAMA_BASE_URL` variable inside the `api` container:
 
 ```env
 OLLAMA_BASE_URL_DOCKER=http://host.docker.internal:11434
