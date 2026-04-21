@@ -1,0 +1,145 @@
+{
+  "info": {
+    "name": "RAGLocalAR - Logistics Classification API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Index",
+      "item": [
+        {
+          "name": "Trigger indexing",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/index",
+              "host": ["{{baseUrl}}"],
+              "path": ["index"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Classify",
+      "item": [
+        {
+          "name": "Classify - single item (EN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"I need to ship a laptop\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/classify",
+              "host": ["{{baseUrl}}"],
+              "path": ["classify"]
+            }
+          }
+        },
+        {
+          "name": "Classify - single item (ES)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Necesito enviar una computadora portátil\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/classify",
+              "host": ["{{baseUrl}}"],
+              "path": ["classify"]
+            }
+          }
+        },
+        {
+          "name": "Classify - multiple items (ES)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Necesito enviar una pintura al óleo y una computadora portátil\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/classify",
+              "host": ["{{baseUrl}}"],
+              "path": ["classify"]
+            }
+          }
+        },
+        {
+          "name": "Classify - multiple items (EN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"I need to transport furniture and some medications\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/classify",
+              "host": ["{{baseUrl}}"],
+              "path": ["classify"]
+            }
+          }
+        },
+        {
+          "name": "Classify - hazmat (ES)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Necesito transportar solventes industriales y ácidos de limpieza\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/classify",
+              "host": ["{{baseUrl}}"],
+              "path": ["classify"]
+            }
+          }
+        },
+        {
+          "name": "Classify - 400 missing prompt",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/classify",
+              "host": ["{{baseUrl}}"],
+              "path": ["classify"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
