@@ -12,27 +12,70 @@ export class RagService {
       .map((c) => `- ${c.metadata.category_name_es}: ${c.document}`)
       .join('\n');
 
-    return `You are a logistics classification assistant. Given the candidate categories below, identify ALL categories that match the user's shipment description.
+    return `Eres un asistente experto en clasificar los ítems de las solicitudes de traslado realizadas por los usuarios. Dadas las siguientes categorías candidatas: ${candidateList}  
+    identifica para cada item en la solicitud del usuario "${userQuery}" a cual de las categorías dadas pertenece cada ítem.
 
-The user wants to transport: "${userQuery}"
-
-Candidate categories:
-${candidateList}
-
-Respond ONLY with a JSON array of the matching category names exactly as listed above.
-Example: ["Electrónica y Tecnología", "Arte y Antigüedades"]
-
-JSON response:`;
+    responde en un Array JSON como el formato del siguiente ejemplo: Example: Respuesta: [ { "item": "Computadoras" }, { "item": "Pinturas, Tratamientos de Pared e Insumos" } ]
+    
+    JSON response`;
   }
 
   parseCategories(rawText: string): string[] {
-    try {
-      const parsed = JSON.parse(rawText.trim());
-      if (Array.isArray(parsed)) return parsed as string[];
-      return [];
-    } catch {
-      return [];
+    const direct = this.tryParseStringArray(rawText.trim());
+    if (direct) return direct;
+
+    const fencedMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    if (fencedMatch) {
+      const fromFence = this.tryParseStringArray(fencedMatch[1].trim());
+      if (fromFence) return fromFence;
     }
+
+    const start = rawText.indexOf('[');
+    const end = rawText.lastIndexOf(']');
+    if (start !== -1 && end > start) {
+      const fromSlice = this.tryParseStringArray(rawText.slice(start, end + 1).trim());
+      if (fromSlice) return fromSlice;
+    }
+
+    return [];
+  }
+
+  private tryParseStringArray(value: string): string[] | null {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      if (!Array.isArray(parsed)) return null;
+
+      const collected = this.collectCategoryStrings(parsed)
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0);
+
+      return collected;
+    } catch {
+      return null;
+    }
+  }
+
+  private collectCategoryStrings(value: unknown): string[] {
+    if (typeof value === 'string') {
+      return [value];
+    }
+
+    if (Array.isArray(value)) {
+      return value.flatMap((item) => this.collectCategoryStrings(item));
+    }
+
+    if (value && typeof value === 'object') {
+      const record = value as Record<string, unknown>;
+      const direct = ['item', 'category', 'category_name_es']
+        .map((key) => record[key])
+        .find((entry) => typeof entry === 'string');
+
+      if (typeof direct === 'string') {
+        return [direct];
+      }
+    }
+
+    return [];
   }
 
   async buildEmbedding(text: string): Promise<number[]> {
