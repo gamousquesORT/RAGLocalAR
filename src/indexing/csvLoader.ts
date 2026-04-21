@@ -6,20 +6,25 @@ export function parseCsv(csvContent: string): CsvRow[] {
   if (!csvContent.trim()) return [];
 
   const rows = parse(csvContent, { columns: true, skip_empty_lines: true }) as Record<string, string>[];
+  const normalizedRows: CsvRow[] = [];
 
   for (const row of rows) {
-    if (!row.description) {
-      throw new Error(`CSV row missing required 'description' field: ${JSON.stringify(row)}`);
+    const description = row.description ?? row.descripcion;
+
+    if (!description) {
+      throw new Error(`CSV row missing required 'description' (or 'descripcion') field: ${JSON.stringify(row)}`);
     }
     if (!row.category_name_es) {
       throw new Error(`CSV row missing required 'category_name_es' field: ${JSON.stringify(row)}`);
     }
-    if (!row.category_name) {
-      throw new Error(`CSV row missing required 'category_name' field: ${JSON.stringify(row)}`);
-    }
+
+    normalizedRows.push({
+      description,
+      category_name_es: row.category_name_es,
+    });
   }
 
-  return rows as unknown as CsvRow[];
+  return normalizedRows;
 }
 
 export function loadCsvFromFile(filePath: string): CsvRow[] {

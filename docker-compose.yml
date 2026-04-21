@@ -16,12 +16,12 @@ services:
       - "${PORT:-3000}:3000"
     environment:
       - PORT=3000
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL_DOCKER:-http://host.docker.internal:11434}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2}
       - OLLAMA_EMBEDDING_MODEL=${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text-v2-moe}
       - CHROMA_URL=http://chroma:8000
       - CHROMA_COLLECTION=${CHROMA_COLLECTION:-logistics_categories}
-      - CSV_PATH=/app/data/logistics-categories.csv
+      - CSV_PATH=${CSV_PATH:-/app/data/product-categories.csv}
       - TOP_K=${TOP_K:-5}
     depends_on:
       - chroma

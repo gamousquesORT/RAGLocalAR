@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { parseCsv } from './csvLoader';
 import { IndexingService } from './indexing.service';
 import { RagService } from '../shared/rag/rag.service';
@@ -5,36 +6,44 @@ import { ChromaClientAdapter } from '../shared/chroma/chroma.client';
 import express from 'express';
 import request from 'supertest';
 import { createIndexingRouter } from './indexing.router';
+import * as fs from 'fs';
 
 // ── csvLoader tests ──────────────────────────────────────────────────────────
 
 describe('parseCsv', () => {
-  const validCsv = `category_name_es,category_name,description
-Electrónica,Electronics,laptops computers
-Arte,Art,paintings sculptures`;
+  const validCsv = `category_name_es,description
+Electrónica,laptops computers
+Arte,paintings sculptures`;
 
   it('parses valid CSV into CsvRow array', () => {
     const rows = parseCsv(validCsv);
     expect(rows).toHaveLength(2);
     expect(rows[0]).toEqual({
       category_name_es: 'Electrónica',
-      category_name: 'Electronics',
       description: 'laptops computers',
     });
   });
 
   it('throws when a row is missing the description field', () => {
-    const badCsv = `category_name_es,category_name\nElectrónica,Electronics`;
+    const badCsv = `category_name_es\nElectrónica`;
     expect(() => parseCsv(badCsv)).toThrow();
+  });
+
+  it('accepts descripcion as an alias for description', () => {
+    const spanishHeaderCsv = `category_name_es,descripcion\nAbalorios y Fabricación de Joyería,Insumos de joyería`;
+
+    const rows = parseCsv(spanishHeaderCsv);
+
+    expect(rows).toEqual([
+      {
+        category_name_es: 'Abalorios y Fabricación de Joyería',
+        description: 'Insumos de joyería',
+      },
+    ]);
   });
 
   it('throws when a row is missing category_name_es', () => {
-    const badCsv = `category_name,description\nElectronics,laptops`;
-    expect(() => parseCsv(badCsv)).toThrow();
-  });
-
-  it('throws when a row is missing category_name', () => {
-    const badCsv = `category_name_es,description\nElectrónica,laptops`;
+    const badCsv = `description\nlaptops`;
     expect(() => parseCsv(badCsv)).toThrow();
   });
 
@@ -49,7 +58,30 @@ const mockRag = { buildEmbedding: jest.fn(), classify: jest.fn() } as unknown as
 const mockChroma = { upsert: jest.fn(), query: jest.fn() } as unknown as ChromaClientAdapter;
 
 describe('IndexingService', () => {
-  const CSV_PATH = `${__dirname}/../../data/logistics-categories.csv`;
+  function resolveCsvPathForTests(): string {
+    const configuredPath = process.env.CSV_PATH ?? './data/product-categories.csv';
+
+    if (fs.existsSync(configuredPath)) {
+      return configuredPath;
+    }
+
+    if (configuredPath.startsWith('/app/')) {
+      const localEquivalent = `.${configuredPath.slice('/app'.length)}`;
+      if (fs.existsSync(localEquivalent)) {
+        return localEquivalent;
+      }
+    }
+
+    return configuredPath;
+  }
+
+  const CSV_PATH = resolveCsvPathForTests();
+
+  function getCsvRowCount(filePath: string): number {
+    const content = fs.readFileSync(filePath, 'utf-8').trim();
+    if (!content) return 0;
+    return content.split('\n').length - 1;
+  }
 
   beforeEach(() => jest.clearAllMocks());
 
@@ -59,8 +91,9 @@ describe('IndexingService', () => {
 
     const service = new IndexingService(mockRag, mockChroma);
     const result = await service.indexFromCsv(CSV_PATH);
+    const expectedRows = getCsvRowCount(CSV_PATH);
 
-    expect(result.indexed).toBe(10);
+    expect(result.indexed).toBe(expectedRows);
     expect(result.errors).toHaveLength(0);
   });
 
@@ -70,6 +103,7 @@ describe('IndexingService', () => {
   });
 
   it('records errors per-row when embedding fails, continues indexing others', async () => {
+    const expectedRows = getCsvRowCount(CSV_PATH);
     const ragWithBuildEmbedding = {
       buildEmbedding: jest.fn()
         .mockResolvedValueOnce([0.1, 0.2])
@@ -81,7 +115,7 @@ describe('IndexingService', () => {
     const result = await service.indexFromCsv(CSV_PATH);
 
     expect(result.indexed).toBe(1);
-    expect(result.errors.length).toBe(9);
+    expect(result.errors.length).toBe(Math.max(expectedRows - 1, 0));
   });
 });
 

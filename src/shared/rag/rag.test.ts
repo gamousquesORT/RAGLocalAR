@@ -13,8 +13,8 @@ const mockChroma = {
 } as unknown as ChromaClientAdapter;
 
 const candidateResults: ChromaResult[] = [
-  { id: '1', metadata: { category_name_es: 'Electrónica y Tecnología', category_name: 'Electronics' }, document: 'laptops computers', distance: 0.1 },
-  { id: '2', metadata: { category_name_es: 'Arte y Antigüedades', category_name: 'Art' }, document: 'paintings sculptures', distance: 0.2 },
+  { id: '1', metadata: { category_name_es: 'Electrónica y Tecnología' }, document: 'laptops computers', distance: 0.1 },
+  { id: '2', metadata: { category_name_es: 'Arte y Antigüedades' }, document: 'paintings sculptures', distance: 0.2 },
 ];
 
 let service: RagService;
@@ -32,8 +32,8 @@ describe('RagService.buildGroundedPrompt', () => {
 
   it('includes candidate category names in the prompt', () => {
     const prompt = service.buildGroundedPrompt('ship a laptop', candidateResults);
-    expect(prompt).toContain('Electronics');
-    expect(prompt).toContain('Art');
+    expect(prompt).toContain('Electrónica y Tecnología');
+    expect(prompt).toContain('Arte y Antigüedades');
   });
 });
 
@@ -57,6 +57,16 @@ describe('RagService.parseCategories', () => {
 
   it('returns [] when JSON parses to a non-array', () => {
     expect(service.parseCategories('{"category":"Electronics"}')).toEqual([]);
+  });
+
+  it('parses categories from a markdown fenced JSON response', () => {
+    const raw = 'Sure, here is the result:\n```json\n["Electrónica y Tecnología", "Arte y Antigüedades"]\n```';
+    expect(service.parseCategories(raw)).toEqual(['Electrónica y Tecnología', 'Arte y Antigüedades']);
+  });
+
+  it('parses nested category arrays from a fenced response with trailing text', () => {
+    const raw = '```json\n[\n  ["Pinturas, Tratamientos de Pared e Insumos"],\n  ["Computadoras"]\n]\n```\n\nEn este caso...';
+    expect(service.parseCategories(raw)).toEqual(['Pinturas, Tratamientos de Pared e Insumos', 'Computadoras']);
   });
 });
 
